@@ -11,24 +11,24 @@ https://docs.djangoproject.com/en/1.10/ref/settings/
 """
 
 import os
+import environ
+from pathlib import Path
 
-# Build paths inside the project like this: os.path.join(PROJECT_DIR, ...)
-PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-BASE_DIR = os.path.dirname(PROJECT_DIR)
+PROJECT_DIR = Path(__file__).parent.parent
+BASE_DIR = Path(__file__).parent.parent.parent
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/1.10/howto/deployment/checklist/
+env = environ.Env(
+    DEBUG=(bool, False)
+)
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'c6u0-9c!7nilj_ysatsda0(f@e_2mws2f!6m0n^o*4#*q#kzp)'
+env_file = BASE_DIR / '.env'
+if env_file.exists():
+    environ.Env.read_env(env_file.open())
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+SECRET_KEY = env('SECRET_KEY')
+DEBUG = env('DEBUG')
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[])
 
-ALLOWED_HOSTS = []
-
-
-# Application definition
 
 INSTALLED_APPS = [
     'mystore.base',
@@ -85,7 +85,7 @@ ROOT_URLCONF = 'mystore.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': ['mystore/templates', ],
+        'DIRS': [ PROJECT_DIR / 'templates', ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -100,19 +100,13 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'mystore.wsgi.application'
 
-
-# Database
-# https://docs.djangoproject.com/en/1.10/ref/settings/#databases
-
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'USER': 'root',
-        'PASSWORD': '',
-        'HOST': 'localhost',
-        'NAME': 'bakerydemodb',
-    }
+    'default': env.db(),
 }
+
+#CACHES = {
+#    'default': env.cache(),
+#}
 
 
 # Password validation
@@ -157,17 +151,21 @@ STATICFILES_FINDERS = [
 ]
 
 STATICFILES_DIRS = [
-    os.path.join(PROJECT_DIR, 'static'),
+    PROJECT_DIR / 'static',
 ]
 
-STATIC_ROOT = os.path.join(PROJECT_DIR, 'collect_static')
+STATIC_ROOT = env(
+    'DJANGO_STATIC_ROOT',
+    default=PROJECT_DIR / 'collect_static'
+)
+
 STATIC_URL = '/static/'
 
-MEDIA_ROOT = os.path.join(PROJECT_DIR, 'media')
+MEDIA_ROOT = PROJECT_DIR / 'media'
 MEDIA_URL = '/media/'
 
 # Override in local settings or replace with your own key. Please don't use our demo key in production!
-GOOGLE_MAP_API_KEY = 'AIzaSyD31CT9P9KxvNUJOwDq2kcFEIG8ADgaFgw'
+GOOGLE_MAP_API_KEY = env('GOOGLE_MAP_API_KEY')
 
 # Use Elasticsearch as the search backend for extra performance and better search results
 WAGTAILSEARCH_BACKENDS = {
